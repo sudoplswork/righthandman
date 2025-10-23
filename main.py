@@ -41,7 +41,12 @@ def main():
     print("Your right hand man says: ")
     gemini_response = client.models.generate_content(model = "gemini-2.0-flash-001", contents = messages)
     print(gemini_response.text)
-    print(f"Prompt tokens: {gemini_response.usage_metadata.prompt_token_count}\nResponse tokens: {gemini_response.usage_metadata.candidates_token_count}")
+    if args.verbose:
+        print(
+            f"User prompt: {user_prompt}\n"
+            f"Prompt tokens: {gemini_response.usage_metadata.prompt_token_count}\n"
+            f"Response tokens: {gemini_response.usage_metadata.candidates_token_count}"
+            )
 
 
 if __name__ == "__main__":
