@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys, argparse
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -8,20 +7,46 @@ from google.genai import types
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
-user_prompt = sys.argv[1]
-messages = [
-    types.Content(role="user", parts=[types.Part(text=user_prompt)]),
-]
+
+
 
 def main():
+
+    parser = argparse.ArgumentParser(
+        description="Input what you need AI assistance with. Strings only rn"
+    )
+
+    parser.add_argument(
+        "prompt",
+        help="The search term or question to input."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output for debugging or detailed logs."
+    )
+    args = parser.parse_args()
+
+    user_prompt = args.prompt
+    messages = [
+        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
+    ]
+
+
+    parser = argparse.ArgumentParser(
+        description="Input what you need AI assistance with. Strings only rn"
+    )
+    
+
     print("Your right hand man says: ")
-    if len(sys.argv) < 2 or not sys.argv[1]:
-        print("You forgot the question, I need a command line argument to search with.")
-        sys.exit(1)
     gemini_response = client.models.generate_content(model = "gemini-2.0-flash-001", contents = messages)
     print(gemini_response.text)
     print(f"Prompt tokens: {gemini_response.usage_metadata.prompt_token_count}\nResponse tokens: {gemini_response.usage_metadata.candidates_token_count}")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("You forgot the query bud.")
+        sys.exit(1)
