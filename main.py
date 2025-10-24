@@ -34,7 +34,7 @@ def main():
 
 
     parser = argparse.ArgumentParser(
-        description="Input what you need AI assistance with. Strings only rn"
+        description="Input what you need AI assistance with. String input, file input in progress"
     )
     
 
