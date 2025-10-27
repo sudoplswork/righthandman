@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from functions.get_files_info import schema_get_files_info
+from functions.get_file_content import schema_get_file_content
+from functions.run_python_file import schema_run_python_file
+from functions.write_file import schema_write_file
+from functions.call_function import call_function
+
 
 load_dotenv()
 
@@ -38,6 +43,9 @@ def main():
     available_functions = types.Tool(
     function_declarations=[
         schema_get_files_info,
+        schema_get_file_content,
+        schema_run_python_file,
+        schema_write_file
         ]
     )
 
@@ -52,11 +60,25 @@ def main():
         )
     
 
-    
+    func_responses = []
     func_calls = getattr(gemini_response, "function_calls", None)
     if func_calls:
         for func in func_calls:
-            print(f"Calling function: {func.name}({func.args})")
+            fnc_name = func.name
+            fnc_args = dict(func.args)
+
+            func_call_result = call_function(fnc_name, args)
+
+            if (
+                not func_call_result.parts or not
+                
+            ):
+                raise ValueError("Fatal Error: tool output missing or empty result")
+            
+            if args.verbose:
+                print(f"-> {tool_output.parts[0].function_response.response}")
+            print(result)
+
     else:
         print(gemini_response.text)
 

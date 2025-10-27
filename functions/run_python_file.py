@@ -1,4 +1,5 @@
 import os, sys, subprocess
+from google.genai import types
 
 def run_python_file(working_directory, file_path, args=[]):
     try:
@@ -54,3 +55,22 @@ def run_python_file(working_directory, file_path, args=[]):
 
     except Exception as e:
         return f'Error finding the python file {input_path} : {e} '
+    
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Runs a provided python file with any optional arguments provided as a list. Execution is constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The name of the python file to be executed. (must be a .py). Execution is constrained to the working directory.",
+            ),
+            "args":types.Schema(
+                type=types.Type.ARRAY,
+                description="A list of optional arguments that have been provided to the python file.",
+                items=types.Schema(type=types.Type.STRING),
+            ),
+        },
+    ),
+)
