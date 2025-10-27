@@ -3,9 +3,10 @@ from config import SYSTEM_PROMPT
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-
+from functions.get_files_info import schema_get_files_info
 
 load_dotenv()
+
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
@@ -24,8 +25,9 @@ def main():
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="Enable verbose output for debugging or detailed logs."
+        help="Enable verbose output for debugging or detailed logs.",
     )
+    
     args = parser.parse_args()
 
     user_prompt = args.prompt
@@ -33,19 +35,32 @@ def main():
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
 
-
-    parser = argparse.ArgumentParser(
-        description="Input what you need AI assistance with. String input, file input in progress"
+    available_functions = types.Tool(
+    function_declarations=[
+        schema_get_files_info,
+        ]
     )
-    
 
     print("Your right hand man says: ")
     gemini_response = client.models.generate_content(
         model = "gemini-2.0-flash-001", 
         contents = messages,
-        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            tools=[available_functions]
+            )
         )
-    print(gemini_response.text)
+    
+
+    
+    func_calls = getattr(gemini_response, "function_calls", None)
+    if func_calls:
+        for func in func_calls:
+            print(f"Calling function: {func.name}({func.args})")
+    else:
+        print(gemini_response.text)
+
+
     if args.verbose:
         print(
             f"User prompt: {user_prompt}\n"
@@ -58,5 +73,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print("You forgot the query bud.")
+        print(f"You forgot something bud, this might help: {e}")
         sys.exit(1)
