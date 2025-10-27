@@ -1,4 +1,5 @@
 import os, sys, argparse
+from config import SYSTEM_PROMPT
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -39,7 +40,11 @@ def main():
     
 
     print("Your right hand man says: ")
-    gemini_response = client.models.generate_content(model = "gemini-2.0-flash-001", contents = messages)
+    gemini_response = client.models.generate_content(
+        model = "gemini-2.0-flash-001", 
+        contents = messages,
+        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
+        )
     print(gemini_response.text)
     if args.verbose:
         print(
