@@ -1,4 +1,5 @@
 import os, sys, argparse
+import types as pytypes
 from config import SYSTEM_PROMPT
 from dotenv import load_dotenv
 from google import genai
@@ -60,35 +61,47 @@ def main():
         )
     
 
-    func_responses = []
-    func_calls = getattr(gemini_response, "function_calls", None)
-    if func_calls:
-        for func in func_calls:
-            fnc_name = func.name
-            fnc_args = dict(func.args)
+    # Seer stone'd sue me 
+    function_responses = []
+    for function_call_part in gemini_response.function_calls:
+        function_call_result = call_function(function_call_part, args.verbose)
 
-            func_call_result = call_function(fnc_name, args)
+        # sanity check
+        if (
+            not function_call_result.parts
+            or not function_call_result.parts[0].function_response
+        ):
+            raise Exception("empty function call result")
 
-            if (
-                not func_call_result.parts or not
-                
-            ):
-                raise ValueError("Fatal Error: tool output missing or empty result")
-            
-            if args.verbose:
-                print(f"-> {tool_output.parts[0].function_response.response}")
-            print(result)
+        # printing if verbose
+        if args.verbose:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
 
-    else:
+        function_responses.append(function_call_result.parts[0])
+
+    if not function_responses:
+        raise Exception("no function responses generated, exiting.")
+        # --- print final results ---
+        
+    if not function_responses:
+        # model produced text only
         print(gemini_response.text)
+        return
+
+    # model invoked one or more tools -> print each result
+    for part in function_responses:
+        fr = part.function_response          # FunctionResponse object
+        payload = getattr(fr, "response", {})  # dict like {"result": "..."}
+        if args.verbose:
+            print(f"Tool payload: {payload}")
+
+        if not isinstance(payload, dict) or not payload.get("result"):
+            raise ValueError(f"Fatal Error: tool output missing or empty result (payload={payload})")
+
+        print(payload["result"])
 
 
-    if args.verbose:
-        print(
-            f"User prompt: {user_prompt}\n"
-            f"Prompt tokens: {gemini_response.usage_metadata.prompt_token_count}\n"
-            f"Response tokens: {gemini_response.usage_metadata.candidates_token_count}"
-            )
+
 
 
 if __name__ == "__main__":
