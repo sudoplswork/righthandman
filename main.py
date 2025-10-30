@@ -14,37 +14,7 @@ api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
 
-
-
-
-
-def main():
-
-    parser = argparse.ArgumentParser(
-        description="Input what you need AI assistance with. Strings only rn"
-    )
-
-    parser.add_argument(
-        "prompt",
-        help="The search term or question to input."
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output for debugging or detailed logs.",
-    )
-    
-    args = parser.parse_args()
-    user_prompt = args.prompt
-
-
-
-    messages = [
-        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
-    ]
-
- 
-
+def generate_content(messages, args):
     print("Your right hand man says: ")
     gemini_response = client.models.generate_content(
         model = "gemini-2.0-flash-001", 
@@ -94,6 +64,36 @@ def main():
             raise ValueError(f"Fatal Error: tool output missing or empty result (payload={payload})")
 
         print(payload["result"])
+    return (gemini_response, function_responses)
+
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description="Input what you need AI assistance with. Strings only rn"
+    )
+
+    parser.add_argument(
+        "prompt",
+        help="The search term or question to input."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output for debugging or detailed logs.",
+    )
+    
+    args = parser.parse_args()
+    user_prompt = args.prompt
+
+
+
+    messages = [
+        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
+    ]
+
+    ai_reply = generate_content(messages, args)
 
 
 
