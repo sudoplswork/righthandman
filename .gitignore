@@ -9,4 +9,6 @@ wheels/
 # Virtual environments
 .venv
 .env
-calculator
+
+# local files from bootdev to test with
+calculator/
