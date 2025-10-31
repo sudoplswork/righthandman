@@ -13,58 +13,28 @@ load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
-
 def generate_content(messages, args):
-    print("Your right hand man says: ")
     gemini_response = client.models.generate_content(
-        model = "gemini-2.0-flash-001", 
-        contents = messages,
+        model="gemini-2.0-flash-001",
+        contents=messages,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
-            tools=[available_functions]
-            )
-        )
-    
+            tools=[available_functions],
+        ),
+    )
 
-    # Seer stone'd sue me 
     function_responses = []
-    for function_call_part in gemini_response.function_calls:
-        function_call_result = call_function(function_call_part, args.verbose)
+    # Check if there are function calls before iterating
+    if gemini_response.function_calls:
+        for fc in gemini_response.function_calls:
+            result = call_function(fc, args.verbose)
+            if not result.parts or not result.parts[0].function_response:
+                raise Exception("empty function call result")
+            if args.verbose:
+                print(f"-> {result.parts[0].function_response.response}")
+            function_responses.append(result.parts[0])
 
-        # sanity check
-        if (
-            not function_call_result.parts
-            or not function_call_result.parts[0].function_response
-        ):
-            raise Exception("empty function call result")
-
-        # printing if verbose
-        if args.verbose:
-            print(f"-> {function_call_result.parts[0].function_response.response}")
-
-        function_responses.append(function_call_result.parts[0])
-
-    if not function_responses:
-        raise Exception("no function responses generated, exiting.")
-        # --- print final results ---
-        
-    if not function_responses:
-        # model produced text only
-        print(gemini_response.text)
-        return
-
-    # model invoked one or more tools -> print each result
-    for part in function_responses:
-        fr = part.function_response          # FunctionResponse object
-        payload = getattr(fr, "response", {})  # dict like {"result": "..."}
-        if args.verbose:
-            print(f"Tool payload: {payload}")
-
-        if not isinstance(payload, dict) or not payload.get("result"):
-            raise ValueError(f"Fatal Error: tool output missing or empty result (payload={payload})")
-
-        print(payload["result"])
-    return (gemini_response, function_responses)
+    return gemini_response, function_responses
 
 
 
@@ -92,12 +62,30 @@ def main():
     messages = [
         types.Content(role="user", parts=[types.Part(text=user_prompt)]),
     ]
-
-    ai_reply = generate_content(messages, args)
-
-
-
-
+    print("Your right hand man says: ")
+    try:
+        i = 0
+        while i < 20:
+            ai_reply, tool_results = generate_content(messages, args)
+            
+            # Add the model's response (including function call decisions) to messages
+            for candidate in ai_reply.candidates:
+                messages.append(candidate.content)
+            
+            # If there are no function calls, we're done - print final response
+            if not ai_reply.function_calls:
+                print("Final response:")
+                print(ai_reply.text)
+                break
+            
+            # Otherwise, add the tool results and continue looping
+            for part in tool_results:
+                messages.append(types.Content(role="user", parts=[part]))
+            
+            i += 1
+        
+    except Exception as e:
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
     try:
