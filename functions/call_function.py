@@ -33,7 +33,6 @@ def make_tool_response(name, result):
 
 def call_function(function_call_part, verbose=False):
 
-    # Google cant get a grip on what they return to this API...
     if isinstance(function_call_part, dict):
         fnc_name = function_call_part.get("name")
         raw_args = function_call_part.get("args", {}) or {}
