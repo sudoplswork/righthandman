@@ -92,3 +92,6 @@ print(run_python_file("calculator", "main.py"))
 # "list the contents of the pkg directory" -> get_files_info({'directory': 'pkg'})
 print("\nPrompt: list the contents of the pkg directory")
 print(get_files_info("calculator", "pkg"))
+
+
+# Using a unit test package is probably the way to go at this point...

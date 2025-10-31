@@ -4,6 +4,7 @@ from functions.get_file_content import get_file_content, schema_get_file_content
 from functions.get_files_info import get_files_info, schema_get_files_info
 from functions.run_python_file import run_python_file, schema_run_python_file
 from functions.write_file import write_file, schema_write_file
+from config import WORKING_DIR
 
 available_functions = types.Tool(
     function_declarations=[
@@ -59,7 +60,7 @@ def call_function(function_call_part, verbose=False):
     # hardcoding working_directory string 
     fnc_name = function_call_part.name
     fnc_args = dict(function_call_part.args)
-    fnc_args["working_directory"] = os.path.abspath("./calculator")
+    fnc_args["working_directory"] = os.path.abspath(WORKING_DIR)
 
 
     # match to call str
